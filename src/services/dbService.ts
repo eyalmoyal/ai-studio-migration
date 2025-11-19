@@ -2,7 +2,7 @@ import { supabase } from '@/integrations/supabase/client';
 import type { Order } from '@/types';
 
 export const createOrder = async (orderData: Omit<Order, 'id' | 'createdAt'>): Promise<Order> => {
-  const { data, error } = await supabase
+  const { data, error } = await (supabase as any)
     .from('orders')
     .insert([{
       order_number: orderData.orderNumber,
@@ -20,6 +20,8 @@ export const createOrder = async (orderData: Omit<Order, 'id' | 'createdAt'>): P
     .single();
 
   if (error) throw error;
+  if (!data) throw new Error('No data returned from insert');
+  
   return {
     id: data.id,
     orderNumber: data.order_number,
@@ -37,16 +39,15 @@ export const createOrder = async (orderData: Omit<Order, 'id' | 'createdAt'>): P
 };
 
 export const getOrderByNumber = async (orderNumber: string): Promise<Order | null> => {
-  const { data, error } = await supabase
+  const { data, error } = await (supabase as any)
     .from('orders')
     .select('*')
     .eq('order_number', orderNumber)
-    .single();
+    .maybeSingle();
 
-  if (error) {
-    if (error.code === 'PGRST116') return null;
-    throw error;
-  }
+  if (error) throw error;
+  if (!data) return null;
+  
   return {
     id: data.id,
     orderNumber: data.order_number,
@@ -64,13 +65,15 @@ export const getOrderByNumber = async (orderNumber: string): Promise<Order | nul
 };
 
 export const getAllOrders = async (): Promise<Order[]> => {
-  const { data, error } = await supabase
+  const { data, error } = await (supabase as any)
     .from('orders')
     .select('*')
     .order('created_at', { ascending: false });
 
   if (error) throw error;
-  return data.map(row => ({
+  if (!data) return [];
+  
+  return data.map((row: any) => ({
     id: row.id,
     orderNumber: row.order_number,
     recipientName: row.recipient_name,
@@ -90,7 +93,7 @@ export const updateOrderStatus = async (
   orderNumber: string, 
   status: Order['status']
 ): Promise<Order> => {
-  const { data, error } = await supabase
+  const { data, error } = await (supabase as any)
     .from('orders')
     .update({ status })
     .eq('order_number', orderNumber)
@@ -98,6 +101,8 @@ export const updateOrderStatus = async (
     .single();
 
   if (error) throw error;
+  if (!data) throw new Error('No data returned from update');
+  
   return {
     id: data.id,
     orderNumber: data.order_number,
@@ -118,7 +123,7 @@ export const updateOrderLyrics = async (
   orderNumber: string,
   lyrics: string
 ): Promise<Order> => {
-  const { data, error } = await supabase
+  const { data, error } = await (supabase as any)
     .from('orders')
     .update({ lyrics })
     .eq('order_number', orderNumber)
@@ -126,6 +131,8 @@ export const updateOrderLyrics = async (
     .single();
 
   if (error) throw error;
+  if (!data) throw new Error('No data returned from update');
+  
   return {
     id: data.id,
     orderNumber: data.order_number,
@@ -146,7 +153,7 @@ export const updateOrderAlbumArt = async (
   orderNumber: string,
   albumArtUrl: string
 ): Promise<Order> => {
-  const { data, error } = await supabase
+  const { data, error } = await (supabase as any)
     .from('orders')
     .update({ album_art_url: albumArtUrl })
     .eq('order_number', orderNumber)
@@ -154,6 +161,8 @@ export const updateOrderAlbumArt = async (
     .single();
 
   if (error) throw error;
+  if (!data) throw new Error('No data returned from update');
+  
   return {
     id: data.id,
     orderNumber: data.order_number,
